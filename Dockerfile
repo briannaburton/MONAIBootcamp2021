@@ -1,31 +1,14 @@
-from pytorch/pytorch:1.10.0-cuda11.3-cudnn8-runtime
+from pytorch/pytorch:1.9.0-cuda10.2-cudnn7-runtime
 
 RUN apt update && apt install -y libsm6 libxext6
-RUN apt-get install -y libxrender-dev
-
-RUN cd ..
-RUN pip install scikit-learn
-RUN pip install scikit-image
-RUN pip install Pillow
-RUN pip install matplotlib
-RUN pip install numpy
-RUN pip install pandas
-RUN pip install monai==0.6.0
-RUN pip install nibabel
-RUN pip install tensorboard
-RUN pip install itk
-RUN pip install tqdm
-RUN pip install torchvision
-RUN pip install matplotlib
-
-RUN pip install jupyter
-# Add Tini. Tini operates as a process subreaper for jupyter. This prevents kernel crashes.
-ENV TINI_VERSION v0.6.0
-ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /usr/bin/tini
-RUN chmod +x /usr/bin/tini
-COPY init.sh /init.sh
-RUN chmod +x /init.sh
-ENTRYPOINT ["/usr/bin/tini", "--"]
-#ENTRYPOINT ["/init.sh"]
-CMD ["/init.sh"]
-#CMD ["jupyter", "notebook", "--port=8888", "--no-browser", "--ip=0.0.0.0", "--allow-root"]
+RUN apt-get update && apt-get install -y libxrender-dev gcc
+RUN conda update -n base -c defaults conda
+RUN conda create -n monai_env python=3.9
+# Make RUN commands use the new environment:
+SHELL ["conda", "run", "-n", "monai_env", "/bin/bash", "-c"]
+RUN python -m pip install --upgrade pip setuptools wheel
+RUN pip install torch==1.9.0+cu111 torchvision==0.10.0+cu111 torchaudio===0.9.0 -f https://download.pytorch.org/whl/torch_stable.html
+RUN python -c "import torch; print(torch.cuda.is_available())"
+COPY requirements.txt /requirements.txt
+Run pip install -r /requirements.txt
+RUN conda init bash
